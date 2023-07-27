@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Lab 02.01 - Ambient Light Testing</title>
+
+    <script src="three.js"></script>
+    <script src="OrbitControls.js"></script>
+
+</head>
+<body>
+<!-- This is the DIV element which will contain the WebGL canvas. To be identifiable later on, the id 'WebGLCanvas' is applied to it. -->
+<div id="WebGLCanvas"> </div>
+
+<script>
+    // create a scene
+    var scene = new THREE.Scene();
+
+
+    // Global objects
+    var camera;
+    var ctr;
+    var renderer;
+    var step = 0.0;
+
+
+    let spotLightTarget, rain, rainGeometry, rainCount = 15000;
+
+    // Initialize the scene
+    initializeScene();
+
+    // Render the scene (map the 3D world to the 2D scene)
+    renderScene();
+
+    /**
+     * Initialize the scene.
+     */
+    function initializeScene(){
+
+
+        renderer = new THREE.WebGLRenderer({antialias:true});
+        // Set the background color of the renderer to black, with full opacity
+        renderer.setClearColor(0xAAAAAA, 1);
+
+        // Get the size of the inner window (content area) to create a full size renderer
+        var canvasWidth = window.innerWidth;
+        var canvasHeight = window.innerHeight;
+
+        // Set the renderers size to the content areas size
+        renderer.setSize(canvasWidth,canvasHeight );
+        renderer.shadowMap.enabled = true;
+        //renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
+        // Get the DIV element from the HTML document by its ID and append the renderers DOM
+        // object to it
+        document.getElementById("WebGLCanvas").appendChild(renderer.domElement);
+
+
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(300, 300);
+        var planeMaterial = new THREE.MeshPhongMaterial({color: 0xffffff, side:THREE.DoubleSide});
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.receiveShadow = true;
+
+        // rotate and position the plane
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 15
+        plane.position.y = 0
+        plane.position.z = 0
+
+        // add the plane to the scene
+        scene.add(plane);
+
+        const pavementTileGeometry = new THREE.BoxGeometry(1,0.1,1);
+        const pavementTileMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 });
+        const pavementTile = new THREE.Mesh(pavementTileGeometry, pavementTileMaterial);
+        let pavement = [];
+        let pavement2 = [];
+        let pavement3 = [];
+        let pavement4 = [];
+        let counter = 0;
+        let counter2 = 0;
+        let counter3 = 0;
+        let counter4 = 0;
+        for(let i=0; i<205; i++){
+            pavement[i] = pavementTile.clone();
+            pavement[i].position.set(-16,0, -80+counter);
+            counter += 1.1;
+            scene.add(pavement[i]);
+        }
+        for(let i=0; i<160; i++){
+            pavement2[i] = pavementTile.clone();
+            pavement2[i].position.set(-16+counter2,0,-80);
+            counter2 += 1.1;
+            scene.add(pavement2[i]);
+        }
+        for(let i=0; i<178; i++){
+            pavement3[i] = pavementTile.clone();
+            pavement3[i].position.set(10,0,-50+counter3);
+            counter3 += 1.1;
+            scene.add(pavement3[i]);
+        }
+        for(let i=0; i<138; i++){
+            pavement4[i] = pavementTile.clone();
+            pavement4[i].position.set(10+counter4,0,-50);
+            counter4 += 1.1;
+            scene.add(pavement4[i]);
+        }
+
+        const lampPostGeometry = new THREE.CylinderGeometry(0.5,0.5,20,32);
+        const lampPostMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        const lampPost = new THREE.Mesh(lampPostGeometry, lampPostMaterial);
+        lampPost.castShadow = true;
+        lampPost.position.set(-12, 10, -20);
+
+        const lanternGeometry = new THREE.BoxGeometry(2.5,0.5,1);
+        const lantern = new THREE.Mesh(lanternGeometry, lampPostMaterial);
+        lantern.castShadow = true;
+        lantern.position.set(-11.3, 20, -19.2);
+        lantern.rotation.y = -0.8;
+
+        const lampLight = new THREE.PointLight(0xffffff, 0.5);
+        lampLight.position.set(-23, 19.5, -40);
+        lampLight.castShadow = true;
+        lampLight.penumbra = 0.5;
+        scene.add(lampLight);
+
+        const streetLight = new THREE.Group();
+        streetLight.add(lampPost);
+        streetLight.add(lantern);
+        streetLight.position.set(-12, 0, -20)
+
+        scene.add(streetLight);
+
+        const streetLight2 = streetLight.clone();
+        streetLight2.position.set(-12, 0, 10);
+        const lampLight2 = lampLight.clone();
+        lampLight2.position.set(-23, 19.5, -9);
+        scene.add(lampLight2);
+        scene.add(streetLight2);
+
+        const streetLight3 = streetLight.clone();
+        streetLight3.position.set(-16, 0, 150);
+        const lampLight3 = lampLight.clone();
+        lampLight3.position.set(-27, 20, 130);
+        scene.add(lampLight3);
+        scene.add(streetLight3);
+
+        const blockGeometry = new THREE.BoxGeometry(80, 30, 20);
+        const blockMaterial = new THREE.MeshPhongMaterial({ color: 0x383838 });
+        const block = new THREE.Mesh(blockGeometry,blockMaterial);
+        block.castShadow = true;
+        block.position.set(30, 15, -100);
+        scene.add(block);
+
+        const block2Geometry = new THREE.BoxGeometry(20, 30, 80);
+        const block2Material = new THREE.MeshLambertMaterial({ color: 0x808080});
+        const block2 = new THREE.Mesh(block2Geometry,block2Material);
+        block2.position.set(-40, 15, 80);
+        scene.add(block2);
+
+        const bigBuildingMainGeometry = new THREE.BoxGeometry(80, 30, 80);
+        const bigBuildingMainMaterial = new THREE.MeshLambertMaterial({ color: 0x808080});
+        const bigBuildingMain = new THREE.Mesh(bigBuildingMainGeometry,bigBuildingMainMaterial);
+        bigBuildingMain.position.set(80, 15, 80);
+        scene.add(bigBuildingMain);
+
+        const bigBuildingSideGeometry = new THREE.BoxGeometry(40, 30, 80);
+        const bigBuildingSide = new THREE.Mesh(bigBuildingSideGeometry, bigBuildingMainMaterial);
+        bigBuildingSide.position.set(100, 15, 0);
+        scene.add(bigBuildingSide);
+
+        const bigBuildingEntranceGeometry = new THREE.BoxGeometry(20, 15, 20);
+        const bigBuildingEntrance = new THREE.Mesh(bigBuildingEntranceGeometry, bigBuildingMainMaterial);
+        bigBuildingEntrance.position.set(80, 7.5, 0);
+        scene.add(bigBuildingEntrance);
+
+        const bigBuildingChimneyGeometry = new THREE.CylinderGeometry(5, 5, 100, 32);
+        const bigBuildingChimneyMaterial = new THREE.MeshLambertMaterial({ color: 0x808080});
+        const bigBuildingChimney = new THREE.Mesh(bigBuildingChimneyGeometry,bigBuildingChimneyMaterial);
+        bigBuildingChimney.position.set(120, 50, 80);
+        scene.add(bigBuildingChimney);
+
+        const bigBuildingChimney2Geometry = new THREE.CylinderGeometry(5, 5, 80, 32);
+        const bigBuildingChimney2 = new THREE.Mesh(bigBuildingChimney2Geometry, bigBuildingChimneyMaterial);
+        bigBuildingChimney2.position.set(120, 40, 100)
+        scene.add(bigBuildingChimney2);
+
+        const buildingLight = new THREE.PointLight(0xffffff, 0.8);
+        buildingLight.position.set(40, 32, 40);
+        buildingLight.castShadow = true;
+        buildingLight.penumbra = 0.25;
+        scene.add(buildingLight);
+
+        const trashcanGeometry = new THREE.CylinderGeometry(1,0.8,2, 32);
+        const trashcanMaterial = new THREE.MeshPhongMaterial({color: 0x676767});
+        const trashcan = new THREE.Mesh(trashcanGeometry,trashcanMaterial);
+        trashcan.castShadow = true;
+        trashcan.position.set(-17.5, 1, -20);
+
+        const trashcanLidGeometry = new THREE.CylinderGeometry(1.1,1.1,0.1, 32);
+        const trashcanLid = new THREE.Mesh(trashcanLidGeometry,trashcanMaterial);
+        trashcanLid.castShadow = true;
+        trashcanLid.position.set(-17.5, 2, -20);
+
+        const trashcan1 = new THREE.Group();
+        trashcan1.add(trashcan);
+        trashcan1.add(trashcanLid);
+        scene.add(trashcan1);
+
+        const trashcan2 = trashcan.clone();
+        trashcan2.position.set(20, 1, -82);
+        scene.add(trashcan2);
+
+        const trashcan3 = trashcan.clone();
+        trashcan3.position.set(90, 1, -82);
+        scene.add(trashcan3);
+
+        spotLightTarget = new THREE.Object3D();
+        spotLightTarget.position.set(0,1,0);
+        scene.add(spotLightTarget);
+
+        const tracingLight = new THREE.SpotLight(0xffffff, 1);
+        tracingLight.position.set(60,60,60);
+        tracingLight.target = spotLightTarget;
+        tracingLight.decay = 0.5;
+        scene.add(tracingLight);
+
+        rainGeometry = new THREE.Geometry();
+        for(let i=0;i<rainCount;i++) {
+            let rainDrop = new THREE.Vector3(
+                Math.random() * 400 -200,
+                Math.random() * 500 - 250,
+                Math.random() * 400 - 200
+            );
+            rainDrop.velocity = {};
+            rainDrop.velocity = 0;
+            rainGeometry.vertices.push(rainDrop);
+        }
+
+        const rainMaterial = new THREE.PointsMaterial({
+            color: 0x000000,
+            size: 0.1,
+            transparent: true
+        });
+        rain = new THREE.Points(rainGeometry,rainMaterial);
+        rain.castShadow = true;
+        scene.add(rain);
+
+        // Define camera and add it to the scene.
+        camera = new THREE.PerspectiveCamera(45, canvasWidth / canvasHeight, 1, 1000);
+        camera.position.set(-25, 30, 25);
+        camera.lookAt(scene.position);
+
+        // const helper = new THREE.CameraHelper( tracingLight.shadow.camera );
+        // scene.add( helper );
+
+        scene.add(camera);
+
+        ctr = new THREE.OrbitControls( camera);
+        ctr.addEventListener( 'change', renderer.domElement);
+
+        // const axesHelper = new THREE.AxesHelper( 5 );
+        // scene.add( axesHelper );
+
+        // add subtle ambient lighting
+        ambiColor = "#0a0a0a";
+        ambientLight = new THREE.AmbientLight(ambiColor);
+        scene.add(ambientLight);
+    }
+
+
+
+    function renderScene() {
+        rainGeometry.vertices.forEach(p => {
+            p.velocity -= 0.1 + Math.random() * 0.1;
+            p.y += p.velocity;
+            if (p.y < -200) {
+                p.y = 200;
+                p.velocity = 0;
+            }
+        });
+        rainGeometry.verticesNeedUpdate = true;
+
+        // spotLightTarget.position.x += Math.random() * (0.5 + 0.5) - 0.5;
+        // spotLightTarget.position.z += Math.random() * (0.5 + 0.5) - 0.5;
+
+        step += 1;
+        if(step>100) step = 0; spotLightTarget.position.x = step; spotLightTarget.position.z = step;
+        spotLightTarget.position.x += 0.25;
+        spotLightTarget.position.z += 0.25;
+        // step += 0.05;
+        // spotLightTarget.position.x = 50 * Math.cos(step);
+        // spotLightTarget.position.z = 50 * Math.sin(step);
+
+        requestAnimationFrame(renderScene);
+        renderer.render(scene, camera);
+    }
+
+
+</script>
+</body>
+</html>
